@@ -5,6 +5,19 @@ All tools have OXPS help documents that describe the algorithms used and the par
 
 For more information about Scikit-Learn check out their main landing page here: http://scikit-learn.org/
 
+#Installing Scikit-Learn for ArcGIS Pro
+The general steps for installing Scikit-Learn is the same for installing other 3rd Party Libraries. 
+:globe_with_meridians: Navigate to the python folder with the ArcGIS Pro install. Usually follows in Program Files-->/ArcGIS\Pro\bin\Python\envs\arcgispro-py3. Activate your conda environment. 
+:globe_with_meridians: Open Command Prompt or your connected IDE (might need to run as adminstrator). 
+:globe_with_meridians: Add Packages with your IDE or in Command Prompt- Navigate to the Python folder. cd /d *path*
+:globe_with_meridians: Type in the prompt: conda install scikit-learn
+
+
+Relevant Links:
+1.https://geonet.esri.com/docs/DOC-8359
+2.http://conda.pydata.org/docs/using/pkgs.html#install-a-package
+3.https://docs.continuum.io/anaconda/ide_integration
+4.http://scikit-learn.org/stable/install.html
 
 # Typical Parameters
 Instead of documenting each tool, the table below documents general parameters these scripting tools have. More advance analysis will require script and parameter customization.
@@ -25,19 +38,19 @@ Instead of documenting each tool, the table below documents general parameters t
 <tr>
 <td class="info">Input_Feature_Class</td>
 <td class="info" align="left">
-<span style="font-weight: bold">Dialog Reference</span><br /><DIV STYLE="text-align:Left;"><DIV><P><SPAN>This is the input feature class that will be clustered or fit using the chosen tool algorithm and its labels/predicted values will be added to the feature class fields. In the case of regression based analysis tools, output summary files might be elected for. </SPAN></P><P><SPAN /></P></DIV></DIV><p><span class="noContent">There is no python reference for this parameter.</span></p></td>
+<span style="font-weight: bold">Dialog Reference</span><br /><DIV STYLE="text-align:Left;"><DIV><P><SPAN>This is the input feature class that will be clustered or fit using the chosen tool algorithm and its labels/predicted values will be added to the feature class fields. In the case of regression based analysis tools, output summary files might be elected for. </SPAN></P><P><SPAN /></P></DIV></DIV><p><span class="noContent"></span></p></td>
 <td class="info" align="left">Feature Layer</td>
 </tr>
 <tr>
 <td class="info">Neighborhood Size/Band Width/Cluster Count/Sensitivity Parameters</td>
 <td class="info" align="left">
-<span style="font-weight: bold">Dialog Reference</span><br /><DIV STYLE="text-align:Left;"><DIV><DIV><P><SPAN> Various clustering/regression algorithms have a bandwidth/alpha/k clusters that specify the parameters of the fit. There will be parameters exposed in the tool to specify these parameters. In the case of bandwidth they will be in the units of the current projection.</SPAN></P><P><SPAN>The points are represented by the raw centroid coordinates returned by "SHAPE@XY" token. </SPAN></P></DIV></DIV></DIV><p><span class="noContent">There is no python reference for this parameter.</span></p></td>
+<span style="font-weight: bold">Dialog Reference</span><br /><DIV STYLE="text-align:Left;"><DIV><DIV><P><SPAN> Various clustering/regression algorithms have a bandwidth/alpha/k clusters that specify the parameters of the fit. There will be parameters exposed in the tool to specify these parameters. In the case of bandwidth they will be in the units of the current projection.</SPAN></P><P><SPAN>The points are represented by the raw centroid coordinates returned by "SHAPE@XY" token. </SPAN></P></DIV></DIV></DIV><p><span class="noContent"></span></p></td>
 <td class="info" align="left">Double</td>
 </tr>
 <tr>
 <td class="info">Weight Fields or Variable Selection(Optional) </td>
 <td class="info" align="left">
-<span style="font-weight: bold">Dialog Reference</span><br /><DIV STYLE="text-align:Left;"><DIV><P><SPAN> For clustering this could be a field used to weight the points according to some magnitude that point represents (one point could represent 5 entities), or there will be parameters to select independent and dependent variables for regression analysis. </SPAN></P></DIV></DIV><p><span class="noContent">There is no python reference for this parameter.</span></p></td>
+<span style="font-weight: bold">Dialog Reference</span><br /><DIV STYLE="text-align:Left;"><DIV><P><SPAN> For clustering this could be a field used to weight the points according to some magnitude that point represents (one point could represent 5 entities), or there will be parameters to select independent and dependent variables for regression analysis. </SPAN></P></DIV></DIV><p><span class="noContent"></span></p></td>
 <td class="info" align="left">Field</td>
 </tr>
 </tbody>
