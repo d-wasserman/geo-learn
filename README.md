@@ -1,25 +1,38 @@
 # Distribution Summary
+
 This is a collection scripts and tools intended to provide a template on how to integrate and apply Scikit-Learn with ArcGIS Pro. The tools distributed enable access to various machine learning through scripting tools in the GeoLearn toolbox. The tools largely work by passing geographic coordinates and related data to be clustered or analyzed to help with spatial analysis tasks, data reduction, or cartography.  
+
 # Usage
+
 All tools have OXPS help documents that describe the algorithms used and the parameters used to use the scripting tools. The help documents also have links to the sci-kit learn documentation and other relevant pages to understand how the various algorithms work. 
 
 For more information about Scikit-Learn check out their main landing page here: http://scikit-learn.org/
 
 #Installing Scikit-Learn for ArcGIS Pro
+
 The general steps for installing Scikit-Learn is the same for installing other 3rd Party Libraries. 
+
 :globe_with_meridians: Navigate to the python folder with the ArcGIS Pro install. Usually follows in Program Files-->/ArcGIS\Pro\bin\Python\envs\arcgispro-py3. Activate your conda environment. 
+
 :globe_with_meridians: Open Command Prompt or your connected IDE (might need to run as adminstrator). 
+
 :globe_with_meridians: Add Packages with your IDE or in Command Prompt- Navigate to the Python folder. cd /d *path*
+
 :globe_with_meridians: Type in the prompt: conda install scikit-learn
 
 
 Relevant Links:
+
 1.https://geonet.esri.com/docs/DOC-8359
+
 2.http://conda.pydata.org/docs/using/pkgs.html#install-a-package
+
 3.https://docs.continuum.io/anaconda/ide_integration
+
 4.http://scikit-learn.org/stable/install.html
 
 # Typical Parameters
+
 Instead of documenting each tool, the table below documents general parameters these scripting tools have. More advance analysis will require script and parameter customization.
 
 <table width="100%" border="0" cellpadding="5">
