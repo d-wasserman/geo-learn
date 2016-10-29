@@ -23,7 +23,7 @@
 # limitations under the License.
 # --------------------------------
 # Import Modules
-import os, arcpy
+import os, arcpy,itertools
 import numpy as np
 
 try:
@@ -40,10 +40,7 @@ input_feature_class = arcpy.GetParameterAsText(0)
 bandwidth = arcpy.GetParameter(1)
 use_estimated_bandwidth = arcpy.GetParameter(2)
 cluster_all_points = arcpy.GetParameter(3)
-
-
-# Todo Add output feature class for centroids. #output_feature_class_centroids=arcpy.GetParameterAsText(4)
-
+output_feature_class_centroids=arcpy.GetParameterAsText(4)
 # Function Definitions
 def funcReport(function=None, reportBool=False):
     """This decorator function is designed to be used as a wrapper with other functions to enable basic try and except
@@ -170,9 +167,35 @@ def arcPrint(string, progressor_Bool=False):
         arcpy.AddMessage(casted_string)
         print(casted_string)
 
+def validate_weight_list(sample_weight,n_samples):
+    """This will return a valid weight array based on a passed sample weight array and the length/shape of the sample
+    features."""
+    if sample_weight is None:
+        # uniform sample weights
+        sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+    else:
+        # user-provided array
+        sample_weight = np.asarray(sample_weight, dtype=np.float64,
+                               order="C")
+    if sample_weight.shape[0] != n_samples:
+        raise ValueError("Shape of features and sample_weight do not match.")
+    return sample_weight
+
+def create_weighted_array(dataset, weightlist):
+    """This function will take a dataset iterable and weight array and create a new list with the components repeated
+    based on the corresponding weight field. The weight field list will be validated. """
+    weighted_list=[]
+    validated_weights= validate_weight_list(weightlist,int(len(dataset))).tolist()
+    for item in zip(dataset, validated_weights):
+        data_points=itertools.repeat(item[0], int(item[1]))
+        for data_point in data_points:
+            weighted_list.append(data_point)
+    return weighted_list
+
+#print(create_weighted_array([[1,3,2],[2,4,4],[3,5,4]],[4,2,4]))
 
 # Function Definitions
-def classify_features_meanshift(in_fc, search_radius, bin_seeding=False, min_bin_freq=1, cluster_all_pts=True,
+def classify_features_meanshift(in_fc, search_radius,output_fc, bin_seeding=False, min_bin_freq=1, cluster_all_pts=True,
                                 estimate_bandwidth=False):
     """Take in a feature class of points and classify them into clusters using Mean Shift clustering from Scikit learn.
      Append field labels to the input feature class using Extend Numpy Array function."""
@@ -180,6 +203,7 @@ def classify_features_meanshift(in_fc, search_radius, bin_seeding=False, min_bin
         # Declare Starting Variables
         desc = arcpy.Describe(in_fc)
         OIDFieldName = desc.OIDFieldName
+        SpatialReference= desc.spatialReference
         workspace = os.path.dirname(desc.catalogPath)
         arcPrint("Converting '{0}' feature class geometry to X-Y centroid numpy arrays.".format(str(desc.name)))
         centroid = 'SHAPE@XY'
@@ -199,7 +223,8 @@ def classify_features_meanshift(in_fc, search_radius, bin_seeding=False, min_bin
         cluster_centroids = meanshift_classification.cluster_centers_
         labels = meanshift_classification.labels_
         # Number of clusters in labels, ignoring noise if present.
-        cluster_count = len(set([i for i in labels if i != -1]))
+        unique_clusters=set([i for i in labels if i != -1])
+        cluster_count = len(unique_clusters)
         arcPrint('Estimated number of clusters: {0}'.format(cluster_count), True)
         try:
             arcPrint("Silhouette Coefficient: {0}.".format(metrics.silhouette_score(coordinates_cluster, labels)), True)
@@ -210,11 +235,20 @@ def classify_features_meanshift(in_fc, search_radius, bin_seeding=False, min_bin
         arcPrint("Appending Labels from Mean Shift to new numpy array.", True)
         JoinField = str(arcpy.ValidateFieldName("NPIndexJoin", workspace))
         LabelField = str(arcpy.ValidateFieldName("MeanShiftLabel", workspace))
+        ShapeXField = str(arcpy.ValidateFieldName("ShapeX",workspace))
+        ShapeYField = str(arcpy.ValidateFieldName("ShapeY",workspace))
         finalMean_ShiftArray = np.array(list(zip(geoarray[objectid], labels)),
                                         dtype=[(JoinField, np.int32), (LabelField, np.int32)])
         arcPrint("Extending Label Fields to Output Feature Class. Clusters labels start at 0, noise is labeled -1.",
                  True)
         arcpy.da.ExtendTable(in_fc, OIDFieldName, finalMean_ShiftArray, JoinField, append_only=False)
+        directory_name=os.path.split(output_fc)[0]
+        file_name=os.path.split(output_fc)[1]
+        if arcpy.Exists(directory_name):
+            arcPrint("Creating Centroid Feature Class of clusters {0}.".format(str(file_name)),True)
+            ShapeX,ShapeY=zip(*cluster_centroids)
+            final_centroid_array=np.asarray(list(zip(ShapeX,ShapeY,unique_clusters)),dtype=[(ShapeXField,np.float64),(ShapeYField,np.float64),(LabelField,np.int32)])
+            arcpy.da.NumPyArrayToFeatureClass(final_centroid_array,output_fc,(ShapeXField,ShapeYField),SpatialReference)
         del geoarray, finalMean_ShiftArray, labels, meanshift_classification
         arcPrint("Script Completed Successfully.", True)
     except arcpy.ExecuteError:
@@ -230,5 +264,5 @@ def classify_features_meanshift(in_fc, search_radius, bin_seeding=False, min_bin
 # as a geoprocessing script tool, or as a module imported in
 # another script
 if __name__ == '__main__':
-    classify_features_meanshift(input_feature_class, search_radius=bandwidth,
+    classify_features_meanshift(input_feature_class, search_radius=bandwidth,output_fc=output_feature_class_centroids,
                                 estimate_bandwidth=use_estimated_bandwidth, cluster_all_pts=cluster_all_points)
