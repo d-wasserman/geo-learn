@@ -25,12 +25,14 @@
 # limitations under the License.
 # --------------------------------
 # Import Modules
-import os, arcpy, itertools
+import os, arcpy
 import numpy as np
+from scipy import stats
 
 try:
     from sklearn import linear_model
     from sklearn import metrics
+    from sklearn import feature_selection
     from sklearn.preprocessing import StandardScaler
 except:
     arcpy.AddError("This library requires Sci-kit Learn installed in the ArcGIS Python Install."
@@ -194,6 +196,40 @@ def get_model(regression_type,module,alpha=1,normalize=False):
             pass
         return regression_model
 
+def regression_summary(regression_model,dependent_array,predicted_values,regressor_names=[],independents_array=np.array([])):
+    """Generates a regression summary list that can be iterated through and reported. Requires the scikit learn
+    model, dependent true values, predicted values, and optionally regressor names to zip with coefficients and
+    the independent variable array to report the regressors F Scores and P Values. .
+    Depends on scipy.stats, and the sklearn feature selection and metrics modules. """
+    model_evaluation_list=[]
+    model_evaluation_list.append("MODEL COEFFICENTS")
+    if len(regressor_names)==len(regression_model.coef_):
+        model_evaluation_list.append("  Regression Coefficents:  {0}".format(str(list(zip(regressor_names,regression_model.coef_)))))
+    else:
+        model_evaluation_list.append("  Regression Coefficents:  {0}".format(str(regression_model.coef_)))
+    model_evaluation_list.append("  Regression Intercept:    {0}".format(str(regression_model.intercept_)))
+    model_evaluation_list.append("MODEL EVALUATION")
+    model_evaluation_list.append("  Model Coefficent of Determination: {0}".format(
+            metrics.r2_score(dependent_array,predicted_values)))
+    model_evaluation_list.append("  Model Mean Squared Error:          {0}".format(
+            metrics.mean_squared_error(dependent_array,predicted_values)))
+    model_evaluation_list.append("  Model Mean Absolute Error:         {0}".format(
+            metrics.mean_absolute_error(dependent_array,predicted_values)))
+    model_evaluation_list.append("  Model Median Absolute Error:       {0}".format(
+            metrics.median_absolute_error(dependent_array,predicted_values)))
+    try:
+        if independents_array.shape[0] == dependent_array.shape[0]:
+            model_evaluation_list.append(("REGRESSOR SCORES"))
+            f_regression_scores,p_values=feature_selection.f_regression(independents_array,dependent_array)
+            if len(regressor_names)==len(p_values):
+                model_evaluation_list.append("  Regressor F-Scores:     {0}".format(str(list(zip(regressor_names,f_regression_scores)))))
+                model_evaluation_list.append("  Regressor P-Values:     {0}".format(str(list(zip(regressor_names,p_values)))))
+            else:
+                model_evaluation_list.append("  Regressor F-Scores:     {0}".format(str(f_regression_scores)))
+                model_evaluation_list.append("  Regressor P-Values:     {0}".format(str(p_values)))
+    except:
+        pass
+    return model_evaluation_list
 # Function Definitions
 def feature_class_sklearn_regression(in_fc, regression_model_type, dependent_var, independent_vars,
                                      alpha=1, normalize=False, output_dir=None):
@@ -231,19 +267,11 @@ def feature_class_sklearn_regression(in_fc, regression_model_type, dependent_var
                 True)
         arcpy.da.ExtendTable(in_fc, OIDFieldName, final_predicted_array, JoinField, append_only=False)
 
-        arcPrint("MODEL COEFFICENTS & RETURNED")
-        arcPrint("  Regression Coefficents:  {0}".format(str(list(zip(independent_vars,regression_model.coef_)))))
-        arcPrint("  Regression Intercept:    {0}".format(str(regression_model.intercept_)))
-        arcPrint("MODEL EVALUATION")
-        arcPrint("  Model Coefficent of Determination: {0}".format(
-                metrics.r2_score(dependent_array,predicted_values)))
-        arcPrint("  Model Mean Squared Error:          {0}".format(
-                metrics.mean_squared_error(dependent_array,predicted_values)))
-        arcPrint("  Model Mean Absolute Error:         {0}".format(
-                metrics.mean_absolute_error(dependent_array,predicted_values)))
-        arcPrint("  Model Median Absolute Error:       {0}".format(
-                metrics.median_absolute_error(dependent_array,predicted_values)))
-        #TODO- Output Dir Implementation- Report-pickled model
+        regession_report=regression_summary(regression_model,dependent_array,predicted_values,independent_vars,
+                                            independent_array)
+        for report in regession_report:
+            arcPrint(report)
+
         del dependent_geoarray,independent_array
         arcPrint("Script Completed Successfully.", True)
     except arcpy.ExecuteError:
