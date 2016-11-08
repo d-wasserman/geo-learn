@@ -33,6 +33,7 @@ try:
     from sklearn import linear_model
     from sklearn import metrics
     from sklearn import feature_selection
+    from sklearn.externals import joblib
     from sklearn.preprocessing import StandardScaler
 except:
     arcpy.AddError("This library requires Sci-kit Learn installed in the ArcGIS Python Install."
@@ -118,7 +119,6 @@ def arcToolReport(function=None, arcToolMessageBool=False, arcProgressorBool=Fal
     else:
         return arcToolReport_Decorator(function)
 
-
 def getFields(featureClass, excludedTolkens=["OID", "Geometry"], excludedFields=["shape_area", "shape_length"]):
     try:
         fcName = os.path.split(featureClass)[1]
@@ -196,15 +196,19 @@ def get_model(regression_type,module,alpha=1,normalize=False):
             pass
         return regression_model
 
+
+
 def regression_summary(regression_model,dependent_array,predicted_values,regressor_names=[],independents_array=np.array([])):
     """Generates a regression summary list that can be iterated through and reported. Requires the scikit learn
     model, dependent true values, predicted values, and optionally regressor names to zip with coefficients and
     the independent variable array to report the regressors F Scores and P Values. .
     Depends on scipy.stats, and the sklearn feature selection and metrics modules. """
     model_evaluation_list=[]
+    model_evaluation_list.append("REGRESSION MODEL: {0}".format(str(regression_model)))
     model_evaluation_list.append("MODEL COEFFICENTS")
     if len(regressor_names)==len(regression_model.coef_):
-        model_evaluation_list.append("  Regression Coefficents:  {0}".format(str(list(zip(regressor_names,regression_model.coef_)))))
+        model_evaluation_list.append("  Regression Coefficents:  {0}".format(" + ".join("{0} * {1}".format(round
+                            (coef, 3), name) for coef, name in list(zip(regression_model.coef_,regressor_names)))))
     else:
         model_evaluation_list.append("  Regression Coefficents:  {0}".format(str(regression_model.coef_)))
     model_evaluation_list.append("  Regression Intercept:    {0}".format(str(regression_model.intercept_)))
@@ -227,6 +231,7 @@ def regression_summary(regression_model,dependent_array,predicted_values,regress
             else:
                 model_evaluation_list.append("  Regressor F-Scores:     {0}".format(str(f_regression_scores)))
                 model_evaluation_list.append("  Regressor P-Values:     {0}".format(str(p_values)))
+
     except:
         pass
     return model_evaluation_list
@@ -263,14 +268,27 @@ def feature_class_sklearn_regression(in_fc, regression_model_type, dependent_var
 
         final_predicted_array = np.array(list(zip(oid_array, predicted_values)),
                                         dtype=[(JoinField, np.int32), (PredictedField, np.float64)])
-        arcPrint("Extending Label Fields to Output Feature Class. Clusters labels start at 0, noise is labeled -1.",
+        arcPrint("Extending Prediction Fields to Output Feature Class.",
                 True)
         arcpy.da.ExtendTable(in_fc, OIDFieldName, final_predicted_array, JoinField, append_only=False)
 
         regession_report=regression_summary(regression_model,dependent_array,predicted_values,independent_vars,
                                             independent_array)
+        valid_output_file_directory=os.path.isdir(output_dir)
+        if valid_output_file_directory:
+            arcPrint("Outputing Report and Pickled model to valid directory.",True)
+            report_name="{0}_Report.txt".format(regression_model_type)
+            #Will update if report exists.
+            text_report= open(os.path.join(output_dir,report_name),"w")
+            model_name="{0}_Model.pkl".format(regression_model_type)
+            model_path= os.path.join(output_dir,model_name)
+            if os.path.exists(model_path):
+                os.remove(model_path)
+            joblib.dump(regression_model,model_path)
         for report in regession_report:
             arcPrint(report)
+            if valid_output_file_directory:
+                text_report.write(str(report)+"\n")
 
         del dependent_geoarray,independent_array
         arcPrint("Script Completed Successfully.", True)
