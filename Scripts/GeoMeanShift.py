@@ -226,6 +226,13 @@ def return_weighted_array(dataset, weightlist):
         weighted_array = dataset
     return weighted_array
 
+def reduce_weighted_array(weighted_array,weight_list):
+    """Reduce weighted repeated array to original feature size based on the pass weighted array and the last weighted
+    record kept in the created weighted array. Cumulative sum is used to derive index locations of last elements of a
+     weight list assume features at same record share an index."""
+    indices = np.cumsum(weight_list) - 1
+    reduced_array = np.take(weighted_array, indices=indices)  # original locations
+    return reduced_array
 
 # Function Definitions
 def classify_features_meanshift(in_fc, search_radius, output_fc,weight_field=None,alternative_fields=[],
@@ -292,6 +299,8 @@ def classify_features_meanshift(in_fc, search_radius, output_fc,weight_field=Non
                                         dtype=[(JoinField, np.int32), (LabelField, np.int32)])
         arcPrint("Extending Label Fields to Output Feature Class. Clusters labels start at 0, noise is labeled -1.",
                  True)
+        if using_cluster_weight:
+            labels=reduce_weighted_array(labels,geoarray[weight_field])
         arcpy.da.ExtendTable(in_fc, OIDFieldName, finalMean_ShiftArray, JoinField, append_only=False)
         #Export feature class centroids
         directory_name = os.path.split(output_fc)[0]
