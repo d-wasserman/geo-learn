@@ -23,6 +23,8 @@
 # limitations under the License.
 # --------------------------------
 # Import Modules
+
+
 import os, arcpy, itertools
 import numpy as np
 
@@ -41,6 +43,9 @@ bandwidth = arcpy.GetParameter(1)
 use_estimated_bandwidth = arcpy.GetParameter(2)
 cluster_all_points = arcpy.GetParameter(3)
 output_feature_class_centroids = arcpy.GetParameterAsText(4)
+weight_field  = arcpy.GetParameterAsText(5)
+fields_to_cluster = str(arcpy.GetParameterAsText(6)).split(";")
+
 
 
 # Function Definitions
@@ -60,8 +65,8 @@ def funcReport(function=None, reportBool=False):
                 return funcResult
             except Exception as e:
                 print(
-                        "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
-                                                                                        str(args)))
+                    "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
+                                                                                    str(args)))
                 print(e.args[0])
 
         return funcWrapper
@@ -98,8 +103,8 @@ def arcToolReport(function=None, arcToolMessageBool=False, arcProgressorBool=Fal
                         "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
                                                                                         str(args)))
                 print(
-                        "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
-                                                                                        str(args)))
+                    "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
+                                                                                    str(args)))
                 print(e.args[0])
 
         return funcWrapper
@@ -169,63 +174,101 @@ def arcPrint(string, progressor_Bool=False):
         arcpy.AddMessage(casted_string)
         print(casted_string)
 
+def determine_extract_and_subset_fields(input_feature_class,all_fields,exception_fields=[],additional_fields=[],
+                                        subset_removal_fields=[]):
+    """This worker funciton will create two sets of fields, one set to be passed on to fit/processing methods if they
+    exist in a feature class or if they are designated to be removed. The goal of this function is to get one list to
+    build the main numpy array from the feature class, and another set to be passed to the fit/processing methods.
+    The subset removal field helps filter out weight fields that need to be in the extract fields"""
+    extract_fields=[]
+    subset_fields=[]
+    ignore_removal=True
+    valid_fields=[str(i) for i in all_fields if FieldExist(input_feature_class,str(i))]
+    valid_additional_fields=[str(i) for i in additional_fields if FieldExist(input_feature_class,str(i))]
+    if len(valid_fields)>=1:
+        extract_fields=valid_additional_fields+valid_fields
+        subset_fields= valid_fields
+    else:
+        extract_fields = valid_additional_fields+exception_fields
+        subset_fields=exception_fields
+        ignore_removal=False
+    if ignore_removal:
+        for subset_removal in subset_removal_fields:
+            if subset_removal in subset_fields:
+                subset_fields.remove(subset_removal)
+    return extract_fields,subset_fields
+
 
 def validate_weight_list(sample_weight, n_samples):
     """This will return a valid weight array based on a passed sample weight array and the length/shape of the sample
-    features."""
+    features or it will return None and return a flag boolean to indicate not to weight the sample."""
+    use_weighted = True
     if sample_weight is None:
-        # uniform sample weights
+        # uniform sample weights-no change to input data.
         sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+        use_weighted = False
     else:
         # user-provided array
         sample_weight = np.asarray(sample_weight, dtype=np.float64,
                                    order="C")
     if sample_weight.shape[0] != n_samples:
         raise ValueError("Shape of features and sample_weight do not match.")
-    return sample_weight
+    return sample_weight, use_weighted
 
 
-def create_weighted_array(dataset, weightlist):
-    """This function will take a dataset iterable and weight array and create a new list with the components repeated
-    based on the corresponding weight field. The weight field list will be validated. """
-    weighted_list = []
-    validated_weights = validate_weight_list(weightlist, int(len(dataset))).tolist()
-    for item in zip(dataset, validated_weights):
-        data_points = itertools.repeat(item[0], int(item[1]))
-        for data_point in data_points:
-            weighted_list.append(data_point)
-    return weighted_list
+def return_weighted_array(dataset, weightlist):
+    """This function will take a dataset iterable and weight array and create a new numpy array
+     with the components repeated based on the corresponding weight field. The weight field list will be validated. """
+    validated_weights, use_weightlist = validate_weight_list(weightlist, int(len(dataset)))
+    if use_weightlist:
+        weighted_array = np.repeat(dataset, weightlist, axis=0)
+    else:
+        weighted_array = dataset
+    return weighted_array
 
-
-# print(create_weighted_array([[1,3,2],[2,4,4],[3,5,4]],[4,2,4]))
 
 # Function Definitions
-def classify_features_meanshift(in_fc, search_radius, output_fc, bin_seeding=False, min_bin_freq=1,
-                                cluster_all_pts=True,
-                                estimate_bandwidth=False):
+def classify_features_meanshift(in_fc, search_radius, output_fc,weight_field=None,alternative_fields=[],
+                                bin_seeding=False, min_bin_freq=1,cluster_all_pts=True,estimate_bandwidth=False):
     """Take in a feature class of points and classify them into clusters using Mean Shift clustering from Scikit learn.
      Append field labels to the input feature class using Extend Numpy Array function."""
     try:
         # Declare Starting Variables
         desc = arcpy.Describe(in_fc)
-        OIDFieldName = desc.OIDFieldName
         SpatialReference = desc.spatialReference
         workspace = os.path.dirname(desc.catalogPath)
-        arcPrint("Converting '{0}' feature class geometry to X-Y centroid numpy arrays.".format(str(desc.name)))
+        arcPrint("Converting '{0}' feature class to numpy array based on inputs.".format(str(desc.name)))
         centroid = 'SHAPE@XY'
-        objectid = 'OID@'
-        fields = [centroid, objectid]
+        OIDFieldName = desc.OIDFieldName
+        feature_class_fields,cluster_fields=determine_extract_and_subset_fields(in_fc,
+                            alternative_fields,[centroid],[OIDFieldName,weight_field],[weight_field])
+        arcPrint("Feature class clustering will be conducted on the following fields: {0}".format(cluster_fields))
         # Convert Feature Class to NP array
-        geoarray = arcpy.da.FeatureClassToNumPyArray(in_fc, fields,
+        geoarray = arcpy.da.FeatureClassToNumPyArray(in_fc, feature_class_fields,
                                                      null_value=1)  # Null Values of treated as one feature -weight
-        coordinates_cluster = geoarray[centroid]
-        if estimate_bandwidth:
-            search_radius = cluster.estimate_bandwidth(coordinates_cluster)
+        data= geoarray[cluster_fields[0]]
+        #Create Weighted arrays if weight field is present.
+        using_cluster_weight= True if weight_field in feature_class_fields else False
+        if using_cluster_weight:
+            arcPrint("Preparing weighted Data for clustering.")
+            data= return_weighted_array(data,geoarray[weight_field])
+        # Standardize Data if using Fields.
+        clustering_on_geometry= True if centroid in cluster_fields else False
+        if not clustering_on_geometry: # If Clustering on arbitrary fields, standardize data.
+            arcPrint("Processing arbitrary fields rather than feature coordinates. Standardizing data with Sklearn's "
+                     "StandardScaler(). Bandwidth should be in standardized units or using the estimated bandwidth.")
+            scaler=StandardScaler().fit(data)
+            data_to_cluster = scaler.transform(data)
+        else:
+            data_to_cluster = data
+        # Estimate Bandwidth if chosen.
+        if estimate_bandwidth or search_radius<=0.0:
+            search_radius = cluster.estimate_bandwidth(data_to_cluster)
             arcPrint("Using estimated bandwidth of {0} based on estimation function.".format(search_radius), True)
         arcPrint("Using geographic coordinates to classify with Mean_Shift.", True)
         meanshift_classification = cluster.MeanShift(bandwidth=search_radius, bin_seeding=bin_seeding,
                                                      min_bin_freq=min_bin_freq, cluster_all=cluster_all_pts).fit(
-                coordinates_cluster)
+                data_to_cluster)
         cluster_centroids = meanshift_classification.cluster_centers_
         labels = meanshift_classification.labels_
         # Number of clusters in labels, ignoring noise if present.
@@ -233,25 +276,28 @@ def classify_features_meanshift(in_fc, search_radius, output_fc, bin_seeding=Fal
         cluster_count = len(unique_clusters)
         arcPrint('Estimated number of clusters: {0}'.format(cluster_count), True)
         try:
-            arcPrint("Silhouette Coefficient: {0}.".format(metrics.silhouette_score(coordinates_cluster, labels)), True)
+            arcPrint("Silhouette Coefficient: {0}.".format(metrics.silhouette_score(data_to_cluster, labels)), True)
             arcPrint(
                     """Wikipedia: The silhouette value is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The silhouette ranges from -1 to 1, where a high value indicate that the object is well matched to its own cluster and poorly matched to neighboring clusters.""")
         except Exception as e:
             arcPrint("Could not compute Silhouette Coefficient. Error: {0}".format(str(e.args[0])), True)
+        #After Clustering and Metric gathering extend feature class and export.
         arcPrint("Appending Labels from Mean Shift to new numpy array.", True)
         JoinField = str(arcpy.ValidateFieldName("NPIndexJoin", workspace))
         LabelField = str(arcpy.ValidateFieldName("MeanShiftLabel", workspace))
         LabelCount = str(arcpy.ValidateFieldName("LabelCount", workspace))
         ShapeXField = str(arcpy.ValidateFieldName("ShapeX", workspace))
         ShapeYField = str(arcpy.ValidateFieldName("ShapeY", workspace))
-        finalMean_ShiftArray = np.array(list(zip(geoarray[objectid], labels)),
+        finalMean_ShiftArray = np.array(list(zip(geoarray[OIDFieldName], labels)),
                                         dtype=[(JoinField, np.int32), (LabelField, np.int32)])
         arcPrint("Extending Label Fields to Output Feature Class. Clusters labels start at 0, noise is labeled -1.",
                  True)
         arcpy.da.ExtendTable(in_fc, OIDFieldName, finalMean_ShiftArray, JoinField, append_only=False)
+        #Export feature class centroids
         directory_name = os.path.split(output_fc)[0]
         file_name = os.path.split(output_fc)[1]
-        if arcpy.Exists(directory_name):
+        if arcpy.Exists(directory_name) and clustering_on_geometry:
+            #Only create new feature class it output locations exists and if there clustering is on geometry.
             arcPrint("Creating Centroid Feature Class of clusters {0}.".format(str(file_name)), True)
             ShapeX, ShapeY = zip(*cluster_centroids)
             count_of_items_per_label = [int(labels.tolist().count(unique_value)) for unique_value in unique_clusters]
@@ -275,5 +321,6 @@ def classify_features_meanshift(in_fc, search_radius, output_fc, bin_seeding=Fal
 # as a geoprocessing script tool, or as a module imported in
 # another script
 if __name__ == '__main__':
-    classify_features_meanshift(input_feature_class, search_radius=bandwidth, output_fc=output_feature_class_centroids,
+    classify_features_meanshift(input_feature_class, weight_field=weight_field,
+                                search_radius=bandwidth, output_fc=output_feature_class_centroids,
                                 estimate_bandwidth=use_estimated_bandwidth, cluster_all_pts=cluster_all_points)

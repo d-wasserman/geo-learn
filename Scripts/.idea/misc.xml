@@ -10,5 +10,5 @@
     <ConfirmationsSetting value="0" id="Add" />
     <ConfirmationsSetting value="0" id="Remove" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.4.5 (C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\pythonw.exe)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.4.4 (C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe)" project-jdk-type="Python SDK" />
 </project>
