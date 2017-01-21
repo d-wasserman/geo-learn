@@ -4,7 +4,7 @@ This is a collection scripts and tools intended to provide a template on how to 
 
 # Usage
 
-All tools have OXPS help documents that describe the algorithms used and the parameters used to use the scripting tools. The help documents also have links to the sci-kit learn documentation and other relevant pages to understand how the various algorithms work. 
+All tools have PDF help documents that describe the algorithms used and the parameters used to use the scripting tools. The help documents also have links to the sci-kit learn documentation and other relevant pages to understand how the various algorithms work. 
 
 For more information about Scikit-Learn check out their main landing page here: http://scikit-learn.org/
 
