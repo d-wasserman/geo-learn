@@ -51,119 +51,71 @@ output_text_report = arcpy.GetParameterAsText(6)
 
 
 # Function Definitions
-def funcReport(function=None, reportBool=False):
+def func_report(function=None, reportBool=False):
     """This decorator function is designed to be used as a wrapper with other functions to enable basic try and except
      reporting (if function fails it will report the name of the function that failed and its arguments. If a report
       boolean is true the function will report inputs and outputs of a function.-David Wasserman"""
 
-    def funcReport_Decorator(function):
-        def funcWrapper(*args, **kwargs):
+    def func_report_decorator(function):
+        def func_wrapper(*args, **kwargs):
             try:
-                funcResult = function(*args, **kwargs)
+                func_result = function(*args, **kwargs)
                 if reportBool:
                     print("Function:{0}".format(str(function.__name__)))
                     print("     Input(s):{0}".format(str(args)))
-                    print("     Ouput(s):{0}".format(str(funcResult)))
-                return funcResult
+                    print("     Ouput(s):{0}".format(str(func_result)))
+                return func_result
             except Exception as e:
                 print(
-                        "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
-                                                                                        str(args)))
+                    "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__), str(args)))
                 print(e.args[0])
 
-        return funcWrapper
+        return func_wrapper
 
     if not function:  # User passed in a bool argument
         def waiting_for_function(function):
-            return funcReport_Decorator(function)
+            return func_report_decorator(function)
 
         return waiting_for_function
     else:
-        return funcReport_Decorator(function)
+        return func_report_decorator(function)
 
 
-def arcToolReport(function=None, arcToolMessageBool=False, arcProgressorBool=False):
+def arc_tool_report(function=None, arcToolMessageBool=False, arcProgressorBool=False):
     """This decorator function is designed to be used as a wrapper with other GIS functions to enable basic try and except
      reporting (if function fails it will report the name of the function that failed and its arguments. If a report
       boolean is true the function will report inputs and outputs of a function.-David Wasserman"""
-
-    def arcToolReport_Decorator(function):
-        def funcWrapper(*args, **kwargs):
+    def arc_tool_report_decorator(function):
+        def func_wrapper(*args, **kwargs):
             try:
-                funcResult = function(*args, **kwargs)
+                func_result = function(*args, **kwargs)
                 if arcToolMessageBool:
                     arcpy.AddMessage("Function:{0}".format(str(function.__name__)))
                     arcpy.AddMessage("     Input(s):{0}".format(str(args)))
-                    arcpy.AddMessage("     Ouput(s):{0}".format(str(funcResult)))
+                    arcpy.AddMessage("     Ouput(s):{0}".format(str(func_result)))
                 if arcProgressorBool:
                     arcpy.SetProgressorLabel("Function:{0}".format(str(function.__name__)))
                     arcpy.SetProgressorLabel("     Input(s):{0}".format(str(args)))
-                    arcpy.SetProgressorLabel("     Ouput(s):{0}".format(str(funcResult)))
-                return funcResult
+                    arcpy.SetProgressorLabel("     Ouput(s):{0}".format(str(func_result)))
+                return func_result
             except Exception as e:
                 arcpy.AddMessage(
                         "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
                                                                                         str(args)))
                 print(
-                        "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
-                                                                                        str(args)))
+                    "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__), str(args)))
                 print(e.args[0])
-
-        return funcWrapper
-
+        return func_wrapper
     if not function:  # User passed in a bool argument
         def waiting_for_function(function):
-            return arcToolReport_Decorator(function)
-
+            return arc_tool_report_decorator(function)
         return waiting_for_function
     else:
-        return arcToolReport_Decorator(function)
-
-def getFields(featureClass, excludedTolkens=["OID", "Geometry"], excludedFields=["shape_area", "shape_length"]):
-    try:
-        fcName = os.path.split(featureClass)[1]
-        field_list = [f.name for f in arcpy.ListFields(featureClass) if f.type not in excludedTolkens
-                      and f.name.lower() not in excludedFields]
-        arcPrint("The field list for {0} is:{1}".format(str(fcName), str(field_list)), True)
-        return field_list
-    except:
-        arcPrint("Could not get fields for the following input {0}, returned an empty list.".format(str(featureClass)),
-                 True)
-        arcpy.AddWarning(
-                "Could not get fields for the following input {0}, returned an empty list.".format(str(featureClass)))
-        field_list = []
-        return field_list
+        return arc_tool_report_decorator(function)
 
 
-@arcToolReport
-def FieldExist(featureclass, fieldname):
-    """ Check if a field in a feature class field exists and return true it does, false if not."""
-    fieldList = arcpy.ListFields(featureclass, fieldname)
-    fieldCount = len(fieldList)
-    if (fieldCount >= 1) and fieldname.strip():  # If there is one or more of this field return true
-        return True
-    else:
-        return False
-
-
-@arcToolReport
-def AddNewField(in_table, field_name, field_type, field_precision="#", field_scale="#", field_length="#",
-                field_alias="#", field_is_nullable="#", field_is_required="#", field_domain="#"):
-    # Add a new field if it currently does not exist...add field alone is slower than checking first.
-    if FieldExist(in_table, field_name):
-        print(field_name + " Exists")
-        arcpy.AddMessage(field_name + " Exists")
-    else:
-        print("Adding " + field_name)
-        arcpy.AddMessage("Adding " + field_name)
-        arcpy.AddField_management(in_table, field_name, field_type, field_precision, field_scale,
-                                  field_length,
-                                  field_alias,
-                                  field_is_nullable, field_is_required, field_domain)
-
-
-@arcToolReport
-def arcPrint(string, progressor_Bool=False):
+@arc_tool_report
+def arc_print(string, progressor_Bool=False):
     """ This function is used to simplify using arcpy reporting for tool creation,if progressor bool is true it will
     create a tool label."""
     casted_string = str(string)
@@ -175,6 +127,62 @@ def arcPrint(string, progressor_Bool=False):
         arcpy.AddMessage(casted_string)
         print(casted_string)
 
+
+@arc_tool_report
+def field_exist(featureclass, fieldname):
+    """ArcFunction
+     Check if a field in a feature class field exists and return true it does, false if not.- David Wasserman"""
+    fieldList = arcpy.ListFields(featureclass, fieldname)
+    fieldCount = len(fieldList)
+    if (fieldCount >= 1)and fieldname.strip():  # If there is one or more of this field return true
+        return True
+    else:
+        return False
+
+
+@arc_tool_report
+def add_new_field(in_table, field_name, field_type, field_precision="#", field_scale="#", field_length="#",
+                  field_alias="#", field_is_nullable="#", field_is_required="#", field_domain="#"):
+    """ArcFunction
+    Add a new field if it currently does not exist. Add field alone is slower than checking first.- David Wasserman"""
+    if field_exist(in_table, field_name):
+        print(field_name + " Exists")
+        arcpy.AddMessage(field_name + " Exists")
+    else:
+        print("Adding " + field_name)
+        arcpy.AddMessage("Adding " + field_name)
+        arcpy.AddField_management(in_table, field_name, field_type, field_precision, field_scale,
+                                  field_length,
+                                  field_alias,
+                                  field_is_nullable, field_is_required, field_domain)
+
+@arc_tool_report
+def get_fields(featureClass, excludedTolkens=["OID", "Geometry"],
+               excludedFields=["shape_area", "shape_length"]):
+    """Get all field names from an incoming feature class defaulting to excluding tolkens and shape area & length.
+    Inputs: Feature class, excluding tokens list, excluded fields list.
+    Outputs: List of field names from input feature class. """
+    try:
+        try:  # If  A feature Class split to game name
+            fcName = os.path.split(featureClass)[1]
+        except:  # If a Feature Layer, just print the Layer Name
+            fcName = featureClass
+        field_list = [f.name for f in arcpy.ListFields(featureClass) if f.type not in excludedTolkens
+                      and f.name.lower() not in excludedFields]
+        arc_print("The field list for {0} is:{1}".format(str(fcName), str(field_list)), True)
+        return field_list
+    except:
+        arc_print(
+            "Could not get fields for the following input {0}, returned an empty list.".format(
+                str(featureClass)),
+            True)
+        arcpy.AddWarning(
+            "Could not get fields for the following input {0}, returned an empty list.".format(
+                str(featureClass)))
+        field_list = []
+        return field_list
+
+@arc_tool_report
 def get_model(regression_type,module,alpha=1,normalize=False):
         """Returns the appropriate sklearn model based on a passed string. All regression models use the fit()
         method so this generalizes the function to every regression model in imported modules.
@@ -183,7 +191,7 @@ def get_model(regression_type,module,alpha=1,normalize=False):
         access to this parameter.
         Inputs: Strings with Regression Class Method, Sklearn Module, alpha if one is chosen, and normalize boolean."""
         module_dict=globals()[module]
-        arcPrint("Using input feature class and selected variables to establish {0} "
+        arc_print("Using input feature class and selected variables to establish {0} "
                      "Regression Model.".format(str(regression_type)), True)
         regression_model=getattr(module_dict,regression_type)()
         try:
@@ -197,7 +205,7 @@ def get_model(regression_type,module,alpha=1,normalize=False):
         return regression_model
 
 
-
+@arc_tool_report
 def regression_summary(regression_model,dependent_array,predicted_values,regressor_names=[],independents_array=np.array([])):
     """Generates a regression summary list that can be iterated through and reported. Requires the scikit learn
     model, dependent true values, predicted values, and optionally regressor names to zip with coefficients and
@@ -247,7 +255,7 @@ def feature_class_sklearn_regression(in_fc, regression_model_type, dependent_var
         OIDFieldName = desc.OIDFieldName
         workspace = os.path.dirname(desc.catalogPath)
         objectid = 'OID@'
-        arcPrint("Converting '{0}' feature class fields to numpy arrays.".format(str(desc.name)))
+        arc_print("Converting '{0}' feature class fields to numpy arrays.".format(str(desc.name)))
         # Convert Feature Class to NP array
         dependent_geoarray = arcpy.da.FeatureClassToNumPyArray(in_fc, [objectid,dependent_var],
                                                      null_value=0)  # Null Values of treated as zero
@@ -260,7 +268,7 @@ def feature_class_sklearn_regression(in_fc, regression_model_type, dependent_var
 
         regression_model=get_model(regression_model_type,"linear_model",alpha=alpha,normalize=normalize)
 
-        arcPrint("Fitting {0} model to data.".format(regression_model),True)
+        arc_print("Fitting {0} model to data.".format(regression_model),True)
         regression_model.fit(independent_array,dependent_array)
         predicted_values=regression_model.predict(independent_array)
         JoinField = str(arcpy.ValidateFieldName("NPIndexJoin", workspace))
@@ -268,7 +276,7 @@ def feature_class_sklearn_regression(in_fc, regression_model_type, dependent_var
 
         final_predicted_array = np.array(list(zip(oid_array, predicted_values)),
                                         dtype=[(JoinField, np.int32), (PredictedField, np.float64)])
-        arcPrint("Extending Prediction Fields to Output Feature Class.",
+        arc_print("Extending Prediction Fields to Output Feature Class.",
                 True)
         arcpy.da.ExtendTable(in_fc, OIDFieldName, final_predicted_array, JoinField, append_only=False)
 
@@ -276,7 +284,7 @@ def feature_class_sklearn_regression(in_fc, regression_model_type, dependent_var
                                             independent_array)
         valid_output_file_directory=os.path.isdir(output_dir)
         if valid_output_file_directory:
-            arcPrint("Outputing Report and Pickled model to valid directory.",True)
+            arc_print("Outputing Report and Pickled model to valid directory.",True)
             report_name="{0}_Report.txt".format(regression_model_type)
             #Will update if report exists.
             text_report= open(os.path.join(output_dir,report_name),"w")
@@ -286,16 +294,16 @@ def feature_class_sklearn_regression(in_fc, regression_model_type, dependent_var
                 os.remove(model_path)
             joblib.dump(regression_model,model_path)
         for report in regession_report:
-            arcPrint(report)
+            arc_print(report)
             if valid_output_file_directory:
                 text_report.write(str(report)+"\n")
 
         del dependent_geoarray,independent_array
-        arcPrint("Script Completed Successfully.", True)
+        arc_print("Script Completed Successfully.", True)
     except arcpy.ExecuteError:
-        arcPrint(arcpy.GetMessages(2))
+        arc_print(arcpy.GetMessages(2))
     except Exception as e:
-        arcPrint(e.args[0])
+        arc_print(e.args[0])
 
 
 # End do_analysis function

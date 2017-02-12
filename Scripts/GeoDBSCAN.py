@@ -42,54 +42,53 @@ weight_field = arcpy.GetParameterAsText(3)
 
 
 # Function Definitions
-def funcReport(function=None, reportBool=False):
+def func_report(function=None, reportBool=False):
     """This decorator function is designed to be used as a wrapper with other functions to enable basic try and except
      reporting (if function fails it will report the name of the function that failed and its arguments. If a report
       boolean is true the function will report inputs and outputs of a function.-David Wasserman"""
 
-    def funcReport_Decorator(function):
-        def funcWrapper(*args, **kwargs):
+    def func_report_decorator(function):
+        def func_wrapper(*args, **kwargs):
             try:
-                funcResult = function(*args, **kwargs)
+                func_result = function(*args, **kwargs)
                 if reportBool:
                     print("Function:{0}".format(str(function.__name__)))
                     print("     Input(s):{0}".format(str(args)))
-                    print("     Ouput(s):{0}".format(str(funcResult)))
-                return funcResult
+                    print("     Ouput(s):{0}".format(str(func_result)))
+                return func_result
             except Exception as e:
                 print(
                     "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__), str(args)))
                 print(e.args[0])
 
-        return funcWrapper
+        return func_wrapper
 
     if not function:  # User passed in a bool argument
         def waiting_for_function(function):
-            return funcReport_Decorator(function)
+            return func_report_decorator(function)
 
         return waiting_for_function
     else:
-        return funcReport_Decorator(function)
+        return func_report_decorator(function)
 
 
-def arcToolReport(function=None, arcToolMessageBool=False, arcProgressorBool=False):
+def arc_tool_report(function=None, arcToolMessageBool=False, arcProgressorBool=False):
     """This decorator function is designed to be used as a wrapper with other GIS functions to enable basic try and except
      reporting (if function fails it will report the name of the function that failed and its arguments. If a report
       boolean is true the function will report inputs and outputs of a function.-David Wasserman"""
-
-    def arcToolReport_Decorator(function):
-        def funcWrapper(*args, **kwargs):
+    def arc_tool_report_decorator(function):
+        def func_wrapper(*args, **kwargs):
             try:
-                funcResult = function(*args, **kwargs)
+                func_result = function(*args, **kwargs)
                 if arcToolMessageBool:
                     arcpy.AddMessage("Function:{0}".format(str(function.__name__)))
                     arcpy.AddMessage("     Input(s):{0}".format(str(args)))
-                    arcpy.AddMessage("     Ouput(s):{0}".format(str(funcResult)))
+                    arcpy.AddMessage("     Ouput(s):{0}".format(str(func_result)))
                 if arcProgressorBool:
                     arcpy.SetProgressorLabel("Function:{0}".format(str(function.__name__)))
                     arcpy.SetProgressorLabel("     Input(s):{0}".format(str(args)))
-                    arcpy.SetProgressorLabel("     Ouput(s):{0}".format(str(funcResult)))
-                return funcResult
+                    arcpy.SetProgressorLabel("     Ouput(s):{0}".format(str(func_result)))
+                return func_result
             except Exception as e:
                 arcpy.AddMessage(
                         "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__),
@@ -97,63 +96,17 @@ def arcToolReport(function=None, arcToolMessageBool=False, arcProgressorBool=Fal
                 print(
                     "{0} - function failed -|- Function arguments were:{1}.".format(str(function.__name__), str(args)))
                 print(e.args[0])
-
-        return funcWrapper
-
+        return func_wrapper
     if not function:  # User passed in a bool argument
         def waiting_for_function(function):
-            return arcToolReport_Decorator(function)
-
+            return arc_tool_report_decorator(function)
         return waiting_for_function
     else:
-        return arcToolReport_Decorator(function)
+        return arc_tool_report_decorator(function)
 
 
-def getFields(featureClass, excludedTolkens=["OID", "Geometry"], excludedFields=["shape_area", "shape_length"]):
-    try:
-        fcName = os.path.split(featureClass)[1]
-        field_list = [f.name for f in arcpy.ListFields(featureClass) if f.type not in excludedTolkens
-                      and f.name.lower() not in excludedFields]
-        arcPrint("The field list for {0} is:{1}".format(str(fcName), str(field_list)), True)
-        return field_list
-    except:
-        arcPrint("Could not get fields for the following input {0}, returned an empty list.".format(str(featureClass)),
-                 True)
-        arcpy.AddWarning(
-                "Could not get fields for the following input {0}, returned an empty list.".format(str(featureClass)))
-        field_list = []
-        return field_list
-
-
-@arcToolReport
-def FieldExist(featureclass, fieldname):
-    """ Check if a field in a feature class field exists and return true it does, false if not."""
-    fieldList = arcpy.ListFields(featureclass, fieldname)
-    fieldCount = len(fieldList)
-    if (fieldCount >= 1) and fieldname.strip():  # If there is one or more of this field return true
-        return True
-    else:
-        return False
-
-
-@arcToolReport
-def AddNewField(in_table, field_name, field_type, field_precision="#", field_scale="#", field_length="#",
-                field_alias="#", field_is_nullable="#", field_is_required="#", field_domain="#"):
-    # Add a new field if it currently does not exist...add field alone is slower than checking first.
-    if FieldExist(in_table, field_name):
-        print(field_name + " Exists")
-        arcpy.AddMessage(field_name + " Exists")
-    else:
-        print("Adding " + field_name)
-        arcpy.AddMessage("Adding " + field_name)
-        arcpy.AddField_management(in_table, field_name, field_type, field_precision, field_scale,
-                                  field_length,
-                                  field_alias,
-                                  field_is_nullable, field_is_required, field_domain)
-
-
-@arcToolReport
-def arcPrint(string, progressor_Bool=False):
+@arc_tool_report
+def arc_print(string, progressor_Bool=False):
     """ This function is used to simplify using arcpy reporting for tool creation,if progressor bool is true it will
     create a tool label."""
     casted_string = str(string)
@@ -166,6 +119,60 @@ def arcPrint(string, progressor_Bool=False):
         print(casted_string)
 
 
+@arc_tool_report
+def field_exist(featureclass, fieldname):
+    """ArcFunction
+     Check if a field in a feature class field exists and return true it does, false if not.- David Wasserman"""
+    fieldList = arcpy.ListFields(featureclass, fieldname)
+    fieldCount = len(fieldList)
+    if (fieldCount >= 1)and fieldname.strip():  # If there is one or more of this field return true
+        return True
+    else:
+        return False
+
+
+@arc_tool_report
+def add_new_field(in_table, field_name, field_type, field_precision="#", field_scale="#", field_length="#",
+                  field_alias="#", field_is_nullable="#", field_is_required="#", field_domain="#"):
+    """ArcFunction
+    Add a new field if it currently does not exist. Add field alone is slower than checking first.- David Wasserman"""
+    if field_exist(in_table, field_name):
+        print(field_name + " Exists")
+        arcpy.AddMessage(field_name + " Exists")
+    else:
+        print("Adding " + field_name)
+        arcpy.AddMessage("Adding " + field_name)
+        arcpy.AddField_management(in_table, field_name, field_type, field_precision, field_scale,
+                                  field_length,
+                                  field_alias,
+                                  field_is_nullable, field_is_required, field_domain)
+
+@arc_tool_report
+def get_fields(featureClass, excludedTolkens=["OID", "Geometry"],
+               excludedFields=["shape_area", "shape_length"]):
+    """Get all field names from an incoming feature class defaulting to excluding tolkens and shape area & length.
+    Inputs: Feature class, excluding tokens list, excluded fields list.
+    Outputs: List of field names from input feature class. """
+    try:
+        try:  # If  A feature Class split to game name
+            fcName = os.path.split(featureClass)[1]
+        except:  # If a Feature Layer, just print the Layer Name
+            fcName = featureClass
+        field_list = [f.name for f in arcpy.ListFields(featureClass) if f.type not in excludedTolkens
+                      and f.name.lower() not in excludedFields]
+        arc_print("The field list for {0} is:{1}".format(str(fcName), str(field_list)), True)
+        return field_list
+    except:
+        arc_print(
+            "Could not get fields for the following input {0}, returned an empty list.".format(
+                str(featureClass)),
+            True)
+        arcpy.AddWarning(
+            "Could not get fields for the following input {0}, returned an empty list.".format(
+                str(featureClass)))
+        field_list = []
+        return field_list
+
 # Function Definitions
 def classify_features_dbscan(in_fc, neighborhood_size, minimum_samples, weight_field):
     """Take in a feature class of points and classify them into clusters using DBSCAN from Scikit learn.
@@ -175,12 +182,12 @@ def classify_features_dbscan(in_fc, neighborhood_size, minimum_samples, weight_f
         desc = arcpy.Describe(in_fc)
         OIDFieldName=desc.OIDFieldName
         workspace= os.path.dirname(desc.catalogPath)
-        arcPrint("Converting '{0}' feature class geometry to X-Y centroid numpy arrays.".format(str(desc.name)))
+        arc_print("Converting '{0}' feature class geometry to X-Y centroid numpy arrays.".format(str(desc.name)))
         centroid = 'SHAPE@XY'
         objectid = 'OID@'
         fields = [centroid, objectid]
         use_weight = False
-        if FieldExist(in_fc, weight_field):
+        if field_exist(in_fc, weight_field):
             fields.append(weight_field)
             use_weight = True
         # Convert Feature Class to NP array
@@ -189,36 +196,36 @@ def classify_features_dbscan(in_fc, neighborhood_size, minimum_samples, weight_f
         coordinates_cluster = geoarray[centroid]
 
         if use_weight:
-            arcPrint("Using weight field {0} and geographic coordinates for clustering with DBSCAN.".format(
+            arc_print("Using weight field {0} and geographic coordinates for clustering with DBSCAN.".format(
                         str(weight_field)),True)
             weight = np.asarray(geoarray[weight_field], dtype=np.float64)
             dbscan_classification = cluster.DBSCAN(neighborhood_size, minimum_samples).fit(coordinates_cluster, weight)
         else:
-            arcPrint("Using geographic coordinates to classify with DBSCAN.",True)
+            arc_print("Using geographic coordinates to classify with DBSCAN.",True)
             dbscan_classification = cluster.DBSCAN(neighborhood_size, minimum_samples).fit(coordinates_cluster)
         core_samples_mask = np.zeros_like(dbscan_classification.labels_, dtype=bool)
         core_samples_mask[dbscan_classification.core_sample_indices_] = True
         labels = dbscan_classification.labels_
         # Number of clusters in labels, ignoring noise if present.
         cluster_count = len(set([i for i in labels if i!=-1]))
-        arcPrint('Estimated number of clusters: {0}'.format(cluster_count),True)
+        arc_print('Estimated number of clusters: {0}'.format(cluster_count),True)
         try:
-            arcPrint("Silhouette Coefficient: {0}.".format(metrics.silhouette_score(coordinates_cluster, labels)),True)
-            arcPrint("""Wikipedia: The silhouette value is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The silhouette ranges from -1 to 1, where a high value indicate that the object is well matched to its own cluster and poorly matched to neighboring clusters.""")
+            arc_print("Silhouette Coefficient: {0}.".format(metrics.silhouette_score(coordinates_cluster, labels)),True)
+            arc_print("""Wikipedia: The silhouette value is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The silhouette ranges from -1 to 1, where a high value indicate that the object is well matched to its own cluster and poorly matched to neighboring clusters.""")
         except Exception as e:
-            arcPrint("Could not compute Silhouette Coefficient. Error: {0}".format(str(e.args[0])),True)
-        arcPrint("Appending Labels from DBSCAN to new numpy array.",True)
+            arc_print("Could not compute Silhouette Coefficient. Error: {0}".format(str(e.args[0])),True)
+        arc_print("Appending Labels from DBSCAN to new numpy array.",True)
         JoinField=str(arcpy.ValidateFieldName("NPIndexJoin",workspace))
         LabelField= str(arcpy.ValidateFieldName("DBSCANLabel",workspace))
         finalDBSCANArray= np.array(list(zip(geoarray[objectid],labels)),dtype=[(JoinField,np.int32),(LabelField,np.int32)])
-        arcPrint("Extending Label Fields to Output Feature Class. Clusters labels start at 0, noise is labeled -1.",True)
+        arc_print("Extending Label Fields to Output Feature Class. Clusters labels start at 0, noise is labeled -1.",True)
         arcpy.da.ExtendTable(in_fc,OIDFieldName,finalDBSCANArray,JoinField,append_only=False)
         del geoarray, finalDBSCANArray,labels, dbscan_classification, core_samples_mask
-        arcPrint("Script Completed Successfully.", True)
+        arc_print("Script Completed Successfully.", True)
     except arcpy.ExecuteError:
-        arcPrint(arcpy.GetMessages(2))
+        arc_print(arcpy.GetMessages(2))
     except Exception as e:
-        arcPrint(e.args[0])
+        arc_print(e.args[0])
 
 
 # End do_analysis function

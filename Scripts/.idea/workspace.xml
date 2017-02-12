@@ -19,18 +19,7 @@
     <favorites_list name="Scripts" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="450">
-      <file leaf-file-name="GeoMeanShift.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/GeoMeanShift.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="398">
-              <caret line="301" column="32" selection-start-line="301" selection-start-column="32" selection-end-line="301" selection-end-column="32" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="450" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -73,6 +62,7 @@
     </navigator>
     <panes>
       <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -93,12 +83,12 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Font" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../ODShedAnalyzer" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
@@ -336,6 +326,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/GeoMeanShift.py">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/GeoMeanShift.py">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3550">
           <caret line="143" column="9" selection-start-line="143" selection-start-column="4" selection-end-line="143" selection-end-column="9" />
           <folding />
@@ -525,16 +523,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/GeoSklearnRegression.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="283" column="39" selection-start-line="284" selection-start-column="39" selection-end-line="285" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/GeoMeanShift.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="398">
+        <state relative-caret-position="1562">
           <caret line="301" column="32" selection-start-line="301" selection-start-column="32" selection-end-line="301" selection-end-column="32" />
           <folding />
         </state>
@@ -544,6 +535,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="193" column="35" selection-start-line="193" selection-start-column="35" selection-end-line="193" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/GeoSklearnRegression.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="381">
+          <caret line="283" column="39" selection-start-line="284" selection-start-column="39" selection-end-line="285" selection-end-column="37" />
+          <folding />
         </state>
       </provider>
     </entry>
