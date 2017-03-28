@@ -137,22 +137,6 @@ def field_exist(featureclass, fieldname):
     else:
         return False
 
-@arc_tool_report
-def add_new_field(in_table, field_name, field_type, field_precision="#", field_scale="#", field_length="#",
-                  field_alias="#", field_is_nullable="#", field_is_required="#", field_domain="#"):
-    """ArcFunction
-    Add a new field if it currently does not exist. Add field alone is slower than checking first.- David Wasserman"""
-    if field_exist(in_table, field_name):
-        print(field_name + " Exists")
-        arcpy.AddMessage(field_name + " Exists")
-    else:
-        print("Adding " + field_name)
-        arcpy.AddMessage("Adding " + field_name)
-        arcpy.AddField_management(in_table, field_name, field_type, field_precision, field_scale,
-                                  field_length,
-                                  field_alias,
-                                  field_is_nullable, field_is_required, field_domain)
-
 
 @arc_tool_report
 def add_new_field(in_table, field_name, field_type, field_precision="#", field_scale="#", field_length="#",
