@@ -253,22 +253,22 @@ def classify_features_meanshift(in_fc, search_radius, output_fc,weight_field=Non
         SpatialReference = desc.spatialReference
         workspace = os.path.dirname(desc.catalogPath)
         arc_print("Converting '{0}' feature class to numpy array based on inputs.".format(str(desc.name)))
-        centroid = 'SHAPE@XY'
+        centroid_x,centroid_y = 'SHAPE@X','SHAPE@Y'
         OIDFieldName = desc.OIDFieldName
         feature_class_fields,cluster_fields=determine_extract_and_subset_fields(in_fc,
-                            alternative_fields,[centroid],[OIDFieldName,weight_field],[weight_field])
+                            alternative_fields,[centroid_x,centroid_y],[OIDFieldName,weight_field],[weight_field])
         arc_print("Feature class clustering will be conducted on the following fields: {0}".format(cluster_fields))
         # Convert Feature Class to NP array
         geoarray = arcpy.da.FeatureClassToNumPyArray(in_fc, feature_class_fields,
                                                      null_value=1)  # Null Values of treated as one feature -weight
-        data= geoarray[cluster_fields[0]]
+        data= geoarray[cluster_fields].view((np.float64,len(cluster_fields)))
         #Create Weighted arrays if weight field is present.
         using_cluster_weight= True if weight_field in feature_class_fields else False
         if using_cluster_weight:
             arc_print("Preparing weighted Data for clustering.")
             data= return_weighted_array(data,geoarray[weight_field])
         # Standardize Data if using Fields.
-        clustering_on_geometry= True if centroid in cluster_fields else False
+        clustering_on_geometry= True if centroid_x and centroid_y in cluster_fields else False
         if not clustering_on_geometry: # If Clustering on arbitrary fields, standardize data.
             arc_print("Processing arbitrary fields rather than feature coordinates. Standardizing data with Sklearn's "
                      "StandardScaler(). Bandwidth should be in standardized units or using the estimated bandwidth.")

@@ -183,9 +183,9 @@ def classify_features_dbscan(in_fc, neighborhood_size, minimum_samples, weight_f
         OIDFieldName=desc.OIDFieldName
         workspace= os.path.dirname(desc.catalogPath)
         arc_print("Converting '{0}' feature class geometry to X-Y centroid numpy arrays.".format(str(desc.name)))
-        centroid = 'SHAPE@XY'
+        centroid_x,centroid_y = 'SHAPE@X','SHAPE@Y'
         objectid = 'OID@'
-        fields = [centroid, objectid]
+        fields = [centroid_x,centroid_y, objectid]
         use_weight = False
         if field_exist(in_fc, weight_field):
             fields.append(weight_field)
@@ -193,7 +193,8 @@ def classify_features_dbscan(in_fc, neighborhood_size, minimum_samples, weight_f
         # Convert Feature Class to NP array
         geoarray = arcpy.da.FeatureClassToNumPyArray(in_fc, fields,
                                                      null_value=1)  # Null Values of treated as one feature -weight
-        coordinates_cluster = geoarray[centroid]
+        cluster_fields=[centroid_x,centroid_y]
+        coordinates_cluster = geoarray[cluster_fields].view((np.float64,len(cluster_fields)))
 
         if use_weight:
             arc_print("Using weight field {0} and geographic coordinates for clustering with DBSCAN.".format(
