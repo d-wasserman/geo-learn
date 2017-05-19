@@ -16,9 +16,9 @@ The general steps for installing Scikit-Learn is the same for installing other 3
 
 :globe_with_meridians: Open Command Prompt or your connected IDE (might need to run as adminstrator). 
 
-:globe_with_meridians: Add Packages with your IDE or in Command Prompt- Navigate to the Python folder. cd /d *path*
+:globe_with_meridians: Add Packages with your IDE, Command Prompt, or with ArcGIS Pros Python Package Installer. Conda command is conda install scikitlearn
 
-:globe_with_meridians: Type in the prompt: conda install scikit-learn
+:globe_with_meridians: ArcGIS Pros Python Package Manager is a quick and easy way to add the required dependencies:http://pro.arcgis.com/en/pro-app/arcpy/get-started/what-is-conda.htm
 
 
 Relevant Links:
