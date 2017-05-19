@@ -8,7 +8,7 @@ All tools have PDF help documents that describe the algorithms used and the para
 
 For more information about Scikit-Learn check out their main landing page here: http://scikit-learn.org/
 
-#Installing Scikit-Learn for ArcGIS Pro
+# Installing Scikit-Learn for ArcGIS Pro
 
 The general steps for installing Scikit-Learn is the same for installing other 3rd Party Libraries. 
 
