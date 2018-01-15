@@ -1,1 +1,1 @@
-Indexing C:\Users\David Wasserman\Documents\My Education\GIS and Modeling\GIS Programming-ArcPy\Scripts\GeoLearn\Test.aprx
+Indexing D:\Documents\Github\GeoLearn\Test.aprx
