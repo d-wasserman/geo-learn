@@ -27,6 +27,7 @@
 
 import os, arcpy, itertools
 import numpy as np
+import pandas as pd
 
 try:
     from sklearn import cluster
@@ -228,7 +229,7 @@ def return_weighted_array(dataset, weightlist):
      with the components repeated based on the corresponding weight field. The weight field list will be validated. """
     validated_weights, use_weightlist = validate_weight_list(weightlist, int(len(dataset)))
     if use_weightlist:
-        weighted_array = np.repeat(dataset, weightlist, axis=0)
+        weighted_array = np.repeat(dataset.values, weightlist, axis=0)
     else:
         weighted_array = dataset
     return weighted_array
@@ -249,6 +250,7 @@ def classify_features_meanshift(in_fc, search_radius, output_fc,weight_field=Non
      Append field labels to the input feature class using Extend Numpy Array function."""
     try:
         # Declare Starting Variables
+        arcpy.env.overwriteOutput = True
         desc = arcpy.Describe(in_fc)
         SpatialReference = desc.spatialReference
         workspace = os.path.dirname(desc.catalogPath)
@@ -261,7 +263,7 @@ def classify_features_meanshift(in_fc, search_radius, output_fc,weight_field=Non
         # Convert Feature Class to NP array
         geoarray = arcpy.da.FeatureClassToNumPyArray(in_fc, feature_class_fields,
                                                      null_value=1)  # Null Values of treated as one feature -weight
-        data= geoarray[cluster_fields].view((np.float64,len(cluster_fields)))
+        data= pd.DataFrame(geoarray[cluster_fields])
         #Create Weighted arrays if weight field is present.
         using_cluster_weight= True if weight_field in feature_class_fields else False
         if using_cluster_weight:
@@ -328,7 +330,8 @@ def classify_features_meanshift(in_fc, search_radius, output_fc,weight_field=Non
     except arcpy.ExecuteError:
         arc_print(arcpy.GetMessages(2))
     except Exception as e:
-        arc_print(e.args[0])
+        print(str(e.args[0]))
+        arcpy.AddError(str(e.args[0]))
 
 
 # End do_analysis function
