@@ -3,10 +3,10 @@
 # Purpose: This script is intended to allow ArcGIS users that have Scikit Learn installed in their python installation
 # utilize Mean Shift to create clusters of geographic features based on their centroids.
 # Current Owner: David Wasserman
-# Last Modified: 11/01/2016
-# Copyright:   (c) CoAdapt
-# ArcGIS Version:   ArcGIS Pro/10.4
-# Python Version:   3.5/2.7
+# Last Modified: 4/4/2020
+# Copyright:   (c) David Wasserman
+# ArcGIS Version:   ArcGIS Pro
+# Python Version:   3.6
 # --------------------------------
 # Copyright 2016 David J. Wasserman
 #

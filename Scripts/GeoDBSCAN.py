@@ -3,10 +3,10 @@
 # Purpose: This script is intended to allow ArcGIS users that have Scikit Learn installed in their python installation
 # utilize DBSCAN to create clusters of geographic features based on their centroids.
 # Current Owner: David Wasserman
-# Last Modified: 11/01/2016
-# Copyright:   (c) CoAdapt
-# ArcGIS Version:   ArcGIS Pro/10.4
-# Python Version:   3.5/2.7
+# Last Modified: 4/4/2020
+# Copyright:   (c) David Wasserman
+# ArcGIS Version:   ArcGIS Pro
+# Python Version:   3.6
 # --------------------------------
 # Copyright 2016 David J. Wasserman
 #
@@ -25,6 +25,7 @@
 # Import Modules
 import os, arcpy
 import numpy as np
+import pandas as pd
 try:
     from sklearn import cluster
     from sklearn import metrics
@@ -194,12 +195,12 @@ def classify_features_dbscan(in_fc, neighborhood_size, minimum_samples, weight_f
         geoarray = arcpy.da.FeatureClassToNumPyArray(in_fc, fields,
                                                      null_value=1)  # Null Values of treated as one feature -weight
         cluster_fields=[centroid_x,centroid_y]
-        coordinates_cluster = geoarray[cluster_fields].view((np.float64,len(cluster_fields)))
-
+        data = pd.DataFrame(geoarray)
+        coordinates_cluster = data[cluster_fields]
         if use_weight:
             arc_print("Using weight field {0} and geographic coordinates for clustering with DBSCAN.".format(
                         str(weight_field)),True)
-            weight = np.asarray(geoarray[weight_field], dtype=np.float64)
+            weight = np.asarray(data[weight_field], dtype=np.float64)
             dbscan_classification = cluster.DBSCAN(neighborhood_size, minimum_samples).fit(coordinates_cluster, weight)
         else:
             arc_print("Using geographic coordinates to classify with DBSCAN.",True)
@@ -218,7 +219,7 @@ def classify_features_dbscan(in_fc, neighborhood_size, minimum_samples, weight_f
         arc_print("Appending Labels from DBSCAN to new numpy array.",True)
         JoinField=str(arcpy.ValidateFieldName("NPIndexJoin",workspace))
         LabelField= str(arcpy.ValidateFieldName("DBSCANLabel",workspace))
-        finalDBSCANArray= np.array(list(zip(geoarray[objectid],labels)),dtype=[(JoinField,np.int32),(LabelField,np.int32)])
+        finalDBSCANArray= np.array(list(zip(data[objectid],labels)),dtype=[(JoinField,np.int32),(LabelField,np.int32)])
         arc_print("Extending Label Fields to Output Feature Class. Clusters labels start at 0, noise is labeled -1.",True)
         arcpy.da.ExtendTable(in_fc,OIDFieldName,finalDBSCANArray,JoinField,append_only=False)
         del geoarray, finalDBSCANArray,labels, dbscan_classification, core_samples_mask
@@ -226,7 +227,8 @@ def classify_features_dbscan(in_fc, neighborhood_size, minimum_samples, weight_f
     except arcpy.ExecuteError:
         arc_print(arcpy.GetMessages(2))
     except Exception as e:
-        arc_print(e.args[0])
+        print(str(e.args[0]))
+        arcpy.AddError(str(e.args[0]))
 
 
 # End do_analysis function
